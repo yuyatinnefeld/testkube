@@ -1,0 +1,10 @@
+apiVersion: testworkflows.testkube.io/v1
+kind: TestWorkflow
+metadata:
+  name: bash-app-test
+spec:
+  steps:
+    - run:
+        image: "curlimages/curl:7.78.0"
+        shell: |
+          curl http://nginx.default.svc.cluster.local:8888

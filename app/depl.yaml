@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+      serviceAccountName: test-sa
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa
+  namespace: default
+  labels:
+    stage: dev
+secrets:
+  - name: sa-secret-token
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: default
+  labels:
+    run: nginx
+spec:
+  type: NodePort
+  ports:
+  - port: 8888  # The port on the Service
+    targetPort: 80  # The port on the Pod
+    protocol: TCP
+  selector:
+    app: nginx  # Match the Deployment label
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-pods
+subjects:
+- kind: ServiceAccount
+  name: test-sa
+  namespace: default
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: pod-reader 
+  apiGroup: ""
